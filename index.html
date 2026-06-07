@@ -1572,6 +1572,258 @@ function restorePlanner() {
   }
 }
 
+// ── RENDER SUMMARY ───────────────────────────────────
+function renderSummary() {
+  const weekDays = Object.keys(weekly.days).length;
+  const weekPractices = weekly.practices || 0;
+  document.getElementById('weekDays').textContent = weekDays + ' of 7 days';
+  document.getElementById('weekPractices').textContent = weekPractices;
+  document.getElementById('weekHardest').textContent = weekly.hardest || '—';
+  document.getElementById('weekBest').textContent = weekly.bestMoment || '—';
+  if (weekDays > 0) {
+    const weekInsights = [
+      `You've checked in on ${weekDays} day${weekDays > 1 ? 's' : ''} this week. That's ${weekDays} more than zero.`,
+      `${weekPractices} practice${weekPractices !== 1 ? 's' : ''} completed this week. Your nervous system is noticing.`,
+      `${weekDays} days of showing up for yourself. That's the whole work.`
+    ];
+    document.getElementById('weekInsight').textContent = weekInsights[weekDays % weekInsights.length];
+  }
+  document.getElementById('monthlyCheckins').textContent = monthly.totalCheckins || 0;
+  document.getElementById('monthlyPractices').textContent = monthly.totalPractices || 0;
+  document.getElementById('monthlyDays').textContent = monthly.daysActive || 0;
+}
+
+// ── SECTION SWITCHING ────────────────────────────────
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = { today: 0, tracker: 1, planner: 2, summary: 3, setup: 4 };
+  if (map[name] !== undefined) tabs[map[name]].classList.add('active');
+  if (name === 'summary') renderSummary();
+}
+
+function setBottomNav(btn) {
+  document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── OPTION SELECTION ─────────────────────────────────
+function selectOption(btn, group) {
+  const parent = btn.closest('.options-grid');
+  parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  state.answers = state.answers || {};
+  state.answers[group] = btn.textContent.trim();
+}
+
+// ── YOUTUBE ──────────────────────────────────────────
+function showYT(ytId, mood) {
+  const lib = ytId.includes('morning') ? ytLibrary.morning :
+              ytId.includes('afternoon') ? ytLibrary.afternoon : ytLibrary.evening;
+  const rec = lib[mood] || Object.values(lib)[0];
+  const container = document.getElementById(ytId);
+  if (document.getElementById(ytId + 'Title')) document.getElementById(ytId + 'Title').textContent = rec.title;
+  if (document.getElementById(ytId + 'Channel')) document.getElementById(ytId + 'Channel').textContent = rec.channel;
+  if (document.getElementById(ytId + 'Link')) document.getElementById(ytId + 'Link').href = rec.url;
+  container.classList.add('visible');
+  state.practicesAttempted++;
+  state.lastPractice = rec.title + ' — ' + rec.channel;
+  setTimeout(() => {
+    const after = document.getElementById(ytId.replace('YT', 'After'));
+    if (after) after.classList.add('visible');
+  }, 3000);
+}
+
+function hideYT(ytId) {
+  document.getElementById(ytId).classList.remove('visible');
+}
+
+// ── MICRO ACTIONS ────────────────────────────────────
+function showMicroAction(area) {
+  const block = document.getElementById('microAction');
+  const text = document.getElementById('microActionText');
+  text.textContent = microActions[area];
+  block.style.display = 'block';
+}
+
+// ── NS STATE ─────────────────────────────────────────
+function setNSState(level) {
+  state.nsState = level;
+  daily.nsState = level;
+  saveDaily(daily);
+  const dots = document.querySelectorAll('.ns-dot');
+  dots.forEach((d, i) => {
+    d.classList.remove('active', 'filled');
+    if (i + 1 === level) d.classList.add('active');
+    else if (i + 1 < level) d.classList.add('filled');
+  });
+  document.getElementById('nsStateLabel').textContent = nsLabels[level];
+}
+
+// ── GOOGLE SHEETS LOGGING ────────────────────────────
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbz3yf9jztKr6HHd2Fx49oW0xAMKn3N0tmKLsXW1pOtYQ_avl6iXaCMsizm1mnnVOYF0/exec';
+
+function logToSheet(type) {
+  const now = new Date();
+  const a = state.answers || {};
+  const payload = {
+    date: now.toLocaleDateString('en-GB'),
+    time: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+    checkIn: type,
+    sleep: '', nsState: '', riseEnergy: '', sleepDebt: '',
+    practice: '', practiceFelt: '', notes: '', energy: '', nourishment: ''
+  };
+  if (type === 'morning') {
+    payload.sleep = a['sleep'] || '';
+    payload.nsState = a['nsmorning'] || (state.nsState > 0 ? nsLabels[state.nsState] : 'Not recorded');
+    payload.riseEnergy = document.getElementById('riseEnergy') ? document.getElementById('riseEnergy').value : '';
+    payload.sleepDebt = document.getElementById('riseSleepDebt') ? document.getElementById('riseSleepDebt').value : '';
+    payload.practice = state.lastPractice || '';
+    payload.practiceFelt = a['morningAfter'] || '';
+    payload.notes = document.getElementById('morningReflection') ? document.getElementById('morningReflection').value : '';
+  } else if (type === 'midmorning') {
+    payload.notes = document.getElementById('midMorningNote') ? document.getElementById('midMorningNote').value : '';
+  } else if (type === 'midday') {
+    payload.energy = a['midEnergy'] || '';
+    payload.nourishment = a['nourish'] || '';
+  } else if (type === 'afternoon') {
+    payload.nsState = a['afternoonNeed'] || '';
+    payload.energy = a['dayRate'] || '';
+    payload.practice = state.lastPractice || '';
+    payload.practiceFelt = a['afternoonAfter'] || '';
+  } else if (type === 'evening') {
+    payload.nsState = a['eveningBody'] || (state.nsState > 0 ? nsLabels[state.nsState] : 'Not recorded');
+    payload.practice = state.lastPractice || '';
+    payload.practiceFelt = a['eveningAfter'] || '';
+    payload.notes = document.getElementById('eveningReflection') ? document.getElementById('eveningReflection').value : '';
+  }
+  fetch(SHEET_URL, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+}
+
+// ── SAVE CHECK-INS ───────────────────────────────────
+const trackerEmojis = { morning: '🌅', midmorning: '🌤', midday: '☀️', afternoon: '🌇', evening: '🌙' };
+const trackerStates = { morning: 't1', midmorning: 't2', midday: 't3', afternoon: 't4', evening: 't5' };
+
+function saveCheckin(type) {
+  state.checkins[type] = { done: true };
+  checkinsCompleted = Object.keys(state.checkins).filter(k => state.checkins[k].done).length;
+
+  const prefix = trackerStates[type];
+  document.getElementById(prefix + 'emoji').textContent = trackerEmojis[type];
+  document.getElementById(prefix + 'state').textContent = 'Done ✓';
+
+  document.getElementById('trackCheckins').textContent = checkinsCompleted + ' of 5';
+  document.getElementById('eodCheckins').textContent = checkinsCompleted + ' of 5';
+  document.getElementById('trackPractices').textContent = state.practicesAttempted;
+  document.getElementById('eodPractices').textContent = state.practicesAttempted;
+
+  if (type === 'morning') {
+    const energy = document.getElementById('riseEnergy').value;
+    const debt = document.getElementById('riseSleepDebt').value;
+    const scoreDisplay = [energy && `Energy: ${energy}`, debt && `Debt: ${debt}`].filter(Boolean).join(' · ');
+    if (scoreDisplay) {
+      state.riseScore = scoreDisplay;
+      daily.riseScore = scoreDisplay;
+      document.getElementById('eodSleep').textContent = scoreDisplay;
+    }
+  }
+
+  // Persist daily
+  daily.checkins = state.checkins;
+  daily.practicesAttempted = state.practicesAttempted;
+  daily.nsState = state.nsState;
+  saveDaily(daily);
+
+  // Update weekly
+  weekly.days[TODAY] = { checkins: checkinsCompleted, practices: state.practicesAttempted };
+  if (state.lastPractice) weekly.practices = (weekly.practices || 0) + 1;
+  if (type === 'afternoon' && state.answers && state.answers['dayRate'] && state.answers['dayRate'].includes('hard')) {
+    weekly.hardest = new Date().toLocaleDateString('en-GB', { weekday: 'long' });
+  }
+  if (type === 'evening' && document.getElementById('eveningReflection') && document.getElementById('eveningReflection').value) {
+    weekly.bestMoment = document.getElementById('eveningReflection').value.slice(0, 60) + '…';
+  }
+  saveWeekly(weekly);
+
+  // Update monthly
+  monthly.totalCheckins = (monthly.totalCheckins || 0) + 1;
+  if (state.lastPractice) monthly.totalPractices = (monthly.totalPractices || 0) + 1;
+  monthly.daysActive = Object.keys(localStorage).filter(k => k.startsWith('wb_daily_' + THIS_MONTH)).length;
+  saveMonthly(monthly);
+
+  logToSheet(type);
+  state.answers = {};
+  state.lastPractice = '';
+  updateInsight();
+
+  const cards = document.querySelectorAll('.checkin-card');
+  const cardMap = { morning: 0, midmorning: 1, midday: 2, afternoon: 3, evening: 4 };
+  const card = cards[cardMap[type]];
+  if (card) {
+    const status = card.querySelector('.card-status');
+    if (status) { status.textContent = 'Done ✓'; status.className = 'card-status done'; }
+  }
+
+  const btn = event.target;
+  btn.textContent = 'Saved 💚';
+  btn.style.background = 'var(--green-light)';
+  setTimeout(() => {
+    btn.textContent = type === 'evening' ? 'Close the day gently 🌙' : 'Save check-in 🌿';
+    btn.style.background = '';
+  }, 2000);
+}
+
+function updateInsight() {
+  const insights = [
+    "You showed up for yourself today. That's the whole job.",
+    "One check-in is enough. You did it.",
+    "Your nervous system noticed you came back for it.",
+    "Every pause you took today was an act of self-compassion.",
+    "You're building something real here — one gentle moment at a time."
+  ];
+  const insight = insights[Math.min(checkinsCompleted - 1, insights.length - 1)];
+  daily.insight = insight;
+  saveDaily(daily);
+  document.getElementById('dailyInsight').textContent = insight;
+  document.getElementById('eodInsight').textContent = insight;
+}
+
+function showNourishNudge() { document.getElementById('nourishNudge').style.display = 'block'; }
+function hideNourishNudge() { document.getElementById('nourishNudge').style.display = 'none'; }
+
+// ── PLANNER ──────────────────────────────────────────
+function savePlanner() {
+  const items = [
+    { icon: '💞', label: 'Relationship', key: 'relationship', id: 'plan-relationship' },
+    { icon: '👨‍👩‍👧', label: 'Family', key: 'family', id: 'plan-family' },
+    { icon: '👯', label: 'Social', key: 'social', id: 'plan-social' },
+    { icon: '🌸', label: 'Me Time', key: 'me', id: 'plan-me' }
+  ];
+  const plannerData = {};
+  const container = document.getElementById('savedIntentions');
+  let html = '<div style="font-size:13px; color:var(--text-light); margin-bottom:12px;">This week\'s intentions 🌸</div>';
+  items.forEach(item => {
+    const val = document.getElementById(item.id).value;
+    plannerData[item.key] = val;
+    if (val) html += `<div class="intention-pill"><span>${item.icon}</span><span>${item.label}: ${val}</span></div>`;
+  });
+  savePlannerData(plannerData);
+  container.innerHTML = html;
+  container.classList.add('visible');
+  const btn = event.target;
+  btn.textContent = 'Intentions saved 🌸';
+  setTimeout(() => { btn.textContent = 'Save this week\'s intentions 🌸'; }, 2000);
+}
+
+// ── START ─────────────────────────────────────────────
+init();
+
 </script>
 </body>
 </html>
