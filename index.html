@@ -47,6 +47,7 @@
     pointer-events: none;
     z-index: 0;
     opacity: 0.4;
+    touch-action: none;
   }
 
   .app-wrap {
@@ -131,11 +132,15 @@
   }
 
   .ns-dot {
-    width: 10px; height: 10px;
+    width: 22px; height: 22px;
     border-radius: 50%;
     background: rgba(255,255,255,0.2);
     transition: all 0.4s ease;
     cursor: pointer;
+    position: relative;
+    z-index: 10;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   .ns-dot.active { background: var(--gold); transform: scale(1.2); }
   .ns-dot.filled { background: rgba(255,255,255,0.5); }
@@ -1200,6 +1205,18 @@
 
     <div class="summary-card">
       <div class="summary-title">This Month 🌿</div>
+      <div class="summary-row">
+        <div class="summary-label">Total check-ins</div>
+        <div class="summary-value" id="monthlyCheckins">—</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Practices completed</div>
+        <div class="summary-value" id="monthlyPractices">—</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Days active</div>
+        <div class="summary-value" id="monthlyDays">—</div>
+      </div>
       <div class="insight-block">
         <div class="insight-label">Monthly reflection</div>
         <div class="insight-text">Your monthly story begins with today. Each check-in is a data point that belongs to you.</div>
@@ -1299,15 +1316,84 @@
 </div>
 
 <script>
+// ── STORAGE HELPERS ──────────────────────────────────
+const TODAY = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+const THIS_WEEK = (() => {
+  const d = new Date();
+  const day = d.getDay();
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  return monday.toISOString().slice(0,10);
+})();
+const THIS_MONTH = new Date().toISOString().slice(0,7); // YYYY-MM
+
+function loadDaily() {
+  try {
+    const raw = localStorage.getItem('wb_daily_' + TODAY);
+    return raw ? JSON.parse(raw) : {
+      checkins: {},
+      practicesAttempted: 0,
+      riseScore: '',
+      nsState: 0,
+      insight: '',
+      morningNS: '',
+      eveningNS: ''
+    };
+  } catch(e) { return { checkins: {}, practicesAttempted: 0, riseScore: '', nsState: 0, insight: '', morningNS: '', eveningNS: '' }; }
+}
+
+function saveDaily(d) {
+  try { localStorage.setItem('wb_daily_' + TODAY, JSON.stringify(d)); } catch(e) {}
+}
+
+function loadWeekly() {
+  try {
+    const raw = localStorage.getItem('wb_weekly_' + THIS_WEEK);
+    return raw ? JSON.parse(raw) : { days: {}, practices: 0, hardest: '', bestMoment: '' };
+  } catch(e) { return { days: {}, practices: 0, hardest: '', bestMoment: '' }; }
+}
+
+function saveWeekly(w) {
+  try { localStorage.setItem('wb_weekly_' + THIS_WEEK, JSON.stringify(w)); } catch(e) {}
+}
+
+function loadPlanner() {
+  try {
+    const raw = localStorage.getItem('wb_planner_' + THIS_WEEK);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function savePlannerData(p) {
+  try { localStorage.setItem('wb_planner_' + THIS_WEEK, JSON.stringify(p)); } catch(e) {}
+}
+
+function loadMonthly() {
+  try {
+    const raw = localStorage.getItem('wb_monthly_' + THIS_MONTH);
+    return raw ? JSON.parse(raw) : { totalCheckins: 0, totalPractices: 0, weeksActive: 0 };
+  } catch(e) { return { totalCheckins: 0, totalPractices: 0, weeksActive: 0 }; }
+}
+
+function saveMonthly(m) {
+  try { localStorage.setItem('wb_monthly_' + THIS_MONTH, JSON.stringify(m)); } catch(e) {}
+}
+
 // ── DATA STORE ──────────────────────────────────────
+let daily = loadDaily();
+let weekly = loadWeekly();
+let monthly = loadMonthly();
+
 const state = {
-  checkins: { morning: {}, midmorning: {}, midday: {}, afternoon: {}, evening: {} },
-  nsState: 0,
-  practicesAttempted: 0,
-  practicesFelt: [],
-  riseScore: '',
-  planner: {}
+  checkins: daily.checkins || {},
+  nsState: daily.nsState || 0,
+  practicesAttempted: daily.practicesAttempted || 0,
+  riseScore: daily.riseScore || '',
+  answers: {},
+  lastPractice: ''
 };
+
+let checkinsCompleted = Object.keys(state.checkins).filter(k => state.checkins[k].done).length;
 
 // ── YOUTUBE LIBRARY ─────────────────────────────────
 const ytLibrary = {
@@ -1374,285 +1460,118 @@ const nsLabels = ['', 'Very calm 🌿', 'Calm', 'Neutral', 'Activated', 'Fight/f
 
 // ── INIT ─────────────────────────────────────────────
 function init() {
-  // Set date
   const now = new Date();
+
+  // Header date
   document.getElementById('headerDate').textContent = now.toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   });
 
-  // Set week
+  // Week label
   const monday = new Date(now);
-  monday.setDate(now.getDate() - now.getDay() + 1);
+  monday.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
   document.getElementById('weekOf').textContent = monday.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
 
-  // Rotate morning affirmation
+  // Rotate content
   const dayIndex = now.getDay();
   document.getElementById('morningAffirmation').textContent = morningAffirmations[dayIndex];
   document.getElementById('eveningPrompt').textContent = eveningPrompts[dayIndex];
-
-  // Rotate mid-morning
   const variant = midMorningVariants[dayIndex % midMorningVariants.length];
   document.getElementById('midMorningTitle').textContent = variant.title;
   document.getElementById('midMorningQ1').textContent = variant.q;
 
-  // Update header greeting
+  // Greeting
   const hour = now.getHours();
   let greeting = 'Good morning';
   if (hour >= 12 && hour < 17) greeting = 'Good afternoon';
   else if (hour >= 17) greeting = 'Good evening';
   document.querySelector('.header-title').innerHTML = `${greeting}, <br>you're doing well 🌿`;
+
+  // Restore persisted state
+  restoreUI();
+  restorePlanner();
+  renderSummary();
 }
 
-// ── SECTION SWITCHING ────────────────────────────────
-function showSection(name) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('section-' + name).classList.add('active');
-  const tabs = document.querySelectorAll('.nav-tab');
-  const map = { today: 0, tracker: 1, planner: 2, summary: 3, setup: 4 };
-  if (map[name] !== undefined) tabs[map[name]].classList.add('active');
-}
+// ── RESTORE UI FROM STORAGE ──────────────────────────
+function restoreUI() {
+  // Restore NS dots
+  if (state.nsState > 0) setNSState(state.nsState);
 
-function setBottomNav(btn) {
-  document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
+  // Restore completed check-in cards
+  const trackerEmojis = { morning: '🌅', midmorning: '🌤', midday: '☀️', afternoon: '🌇', evening: '🌙' };
+  const trackerStates = { morning: 't1', midmorning: 't2', midday: 't3', afternoon: 't4', evening: 't5' };
+  const cardMap = { morning: 0, midmorning: 1, midday: 2, afternoon: 3, evening: 4 };
 
-// ── OPTION SELECTION ─────────────────────────────────
-function selectOption(btn, group) {
-  const parent = btn.closest('.options-grid');
-  parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  // Store in state for reliable sheet logging
-  state.answers = state.answers || {};
-  state.answers[group] = btn.textContent.trim();
-}
-
-// ── YOUTUBE ──────────────────────────────────────────
-function showYT(ytId, mood) {
-  const lib = ytId.includes('morning') ? ytLibrary.morning :
-              ytId.includes('afternoon') ? ytLibrary.afternoon : ytLibrary.evening;
-  const rec = lib[mood] || Object.values(lib)[0];
-
-  const container = document.getElementById(ytId);
-  const titleKey = ytId + 'Title';
-  const channelKey = ytId + 'Channel';
-  const linkKey = ytId + 'Link';
-  const afterKey = ytId.replace('YT', 'After');
-
-  if (document.getElementById(titleKey)) document.getElementById(titleKey).textContent = rec.title;
-  if (document.getElementById(channelKey)) document.getElementById(channelKey).textContent = rec.channel;
-  if (document.getElementById(linkKey)) document.getElementById(linkKey).href = rec.url;
-
-  container.classList.add('visible');
-  state.practicesAttempted++;
-  state.lastPractice = rec.title + ' — ' + rec.channel;
-
-  // Show after-practice check after a delay
-  setTimeout(() => {
-    const after = document.getElementById(afterKey);
-    if (after) after.classList.add('visible');
-  }, 3000);
-}
-
-function hideYT(ytId) {
-  document.getElementById(ytId).classList.remove('visible');
-}
-
-// ── MICRO ACTIONS ────────────────────────────────────
-function showMicroAction(area) {
-  const block = document.getElementById('microAction');
-  const text = document.getElementById('microActionText');
-  text.textContent = microActions[area];
-  block.style.display = 'block';
-}
-
-// ── NS STATE ─────────────────────────────────────────
-function setNSState(level) {
-  state.nsState = level;
-  const dots = document.querySelectorAll('.ns-dot');
-  dots.forEach((d, i) => {
-    d.classList.remove('active', 'filled');
-    if (i + 1 === level) d.classList.add('active');
-    else if (i + 1 < level) d.classList.add('filled');
+  Object.keys(state.checkins).forEach(type => {
+    if (state.checkins[type].done) {
+      // Update tracker dots
+      const prefix = trackerStates[type];
+      if (document.getElementById(prefix + 'emoji')) {
+        document.getElementById(prefix + 'emoji').textContent = trackerEmojis[type];
+        document.getElementById(prefix + 'state').textContent = 'Done ✓';
+      }
+      // Mark card as done
+      const cards = document.querySelectorAll('.checkin-card');
+      const card = cards[cardMap[type]];
+      if (card) {
+        const status = card.querySelector('.card-status');
+        if (status) { status.textContent = 'Done ✓'; status.className = 'card-status done'; }
+      }
+    }
   });
-  document.getElementById('nsStateLabel').textContent = nsLabels[level];
-  // Store timestamp of last NS update for sheet logging
-  state.nsUpdatedAt = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-}
 
-// ── GOOGLE SHEETS LOGGING ────────────────────────────
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbz3yf9jztKr6HHd2Fx49oW0xAMKn3N0tmKLsXW1pOtYQ_avl6iXaCMsizm1mnnVOYF0/exec';
-
-function logToSheet(type, extraData = {}) {
-  const now = new Date();
-  const a = state.answers || {};
-
-  // Base payload — only fields that apply to every check-in
-  const payload = {
-    date: now.toLocaleDateString('en-GB'),
-    time: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-    checkIn: type,
-    sleep: '',
-    nsState: '',
-    riseEnergy: '',
-    sleepDebt: '',
-    practice: '',
-    practiceFelt: '',
-    notes: '',
-    energy: '',
-    nourishment: ''
-  };
-
-  // Per check-in: only populate relevant fields
-  if (type === 'morning') {
-    payload.sleep      = a['sleep'] || '';
-    payload.nsState    = a['nsmorning'] || (state.nsState > 0 ? nsLabels[state.nsState] : 'Not recorded');
-    payload.riseEnergy = document.getElementById('riseEnergy') ? document.getElementById('riseEnergy').value : '';
-    payload.sleepDebt  = document.getElementById('riseSleepDebt') ? document.getElementById('riseSleepDebt').value : '';
-    payload.practice   = state.lastPractice || '';
-    payload.practiceFelt = a['morningAfter'] || '';
-    payload.notes      = document.getElementById('morningReflection') ? document.getElementById('morningReflection').value : '';
-  } else if (type === 'midmorning') {
-    payload.notes      = document.getElementById('midMorningNote') ? document.getElementById('midMorningNote').value : '';
-  } else if (type === 'midday') {
-    payload.energy     = a['midEnergy'] || '';
-    payload.nourishment = a['nourish'] || '';
-  } else if (type === 'afternoon') {
-    payload.nsState    = a['afternoonNeed'] || '';
-    payload.energy     = a['dayRate'] || '';
-    payload.practice   = state.lastPractice || '';
-    payload.practiceFelt = a['afternoonAfter'] || '';
-  } else if (type === 'evening') {
-    payload.nsState    = a['eveningBody'] || (state.nsState > 0 ? nsLabels[state.nsState] : 'Not recorded');
-    payload.practice   = state.lastPractice || '';
-    payload.practiceFelt = a['eveningAfter'] || '';
-    payload.notes      = document.getElementById('eveningReflection') ? document.getElementById('eveningReflection').value : '';
-  }
-
-  Object.assign(payload, extraData);
-
-  fetch(SHEET_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).catch(() => {
-    // Silent fail — don't interrupt the user experience
-  });
-}
-
-// ── SAVE CHECK-INS ───────────────────────────────────
-const trackerEmojis = { morning: '🌅', midmorning: '🌤', midday: '☀️', afternoon: '🌇', evening: '🌙' };
-const trackerNS = { morning: 1, midmorning: 2, midday: 3, afternoon: 4, evening: 5 };
-const trackerStates = { morning: 't1', midmorning: 't2', midday: 't3', afternoon: 't4', evening: 't5' };
-
-let checkinsCompleted = 0;
-
-function saveCheckin(type) {
-  state.checkins[type].done = true;
-  checkinsCompleted++;
-
-  // Update tracker
-  const prefix = trackerStates[type];
-  document.getElementById(prefix + 'emoji').textContent = trackerEmojis[type];
-  document.getElementById(prefix + 'state').textContent = 'Done ✓';
-
-  // Update counts
+  // Restore counts
   document.getElementById('trackCheckins').textContent = checkinsCompleted + ' of 5';
   document.getElementById('eodCheckins').textContent = checkinsCompleted + ' of 5';
   document.getElementById('trackPractices').textContent = state.practicesAttempted;
   document.getElementById('eodPractices').textContent = state.practicesAttempted;
 
-  // Rise score
-  if (type === 'morning') {
-    const energy = document.getElementById('riseEnergy').value;
-    const debt = document.getElementById('riseSleepDebt').value;
-    const scoreDisplay = [energy && `Energy: ${energy}`, debt && `Debt: ${debt}`].filter(Boolean).join(' · ');
-    if (scoreDisplay) {
-      state.riseScore = scoreDisplay;
-      document.getElementById('eodSleep').textContent = scoreDisplay;
-    }
+  // Restore RISE
+  if (state.riseScore) {
+    document.getElementById('eodSleep').textContent = state.riseScore;
   }
 
-  // Log to Google Sheets
-  logToSheet(type);
-
-  // Clear answers for this checkin so they don't bleed into the next
-  state.answers = {};
-  state.lastPractice = '';
-
-  // Update insight
-  updateInsight();
-
-  // Mark card as done
-  const cards = document.querySelectorAll('.checkin-card');
-  const cardMap = { morning: 0, midmorning: 1, midday: 2, afternoon: 3, evening: 4 };
-  const card = cards[cardMap[type]];
-  if (card) {
-    const status = card.querySelector('.card-status');
-    if (status) { status.textContent = 'Done ✓'; status.className = 'card-status done'; }
+  // Restore insight
+  if (daily.insight) {
+    document.getElementById('dailyInsight').textContent = daily.insight;
+    document.getElementById('eodInsight').textContent = daily.insight;
   }
-
-  // Visual feedback
-  const btn = event.target;
-  btn.textContent = 'Saved 💚';
-  btn.style.background = 'var(--green-light)';
-  setTimeout(() => {
-    btn.textContent = type === 'evening' ? 'Close the day gently 🌙' : 'Save check-in 🌿';
-    btn.style.background = '';
-  }, 2000);
 }
 
-function updateInsight() {
-  const insights = [
-    "You showed up for yourself today. That's the whole job.",
-    "One check-in is enough. You did it.",
-    "Your nervous system noticed you came back for it.",
-    "Every pause you took today was an act of self-compassion.",
-    "You're building something real here — one gentle moment at a time."
-  ];
-  const insight = insights[checkinsCompleted - 1] || insights[0];
-  document.getElementById('dailyInsight').textContent = insight;
-  document.getElementById('eodInsight').textContent = insight;
-}
+// ── RESTORE PLANNER ──────────────────────────────────
+function restorePlanner() {
+  const saved = loadPlanner();
+  if (!saved) return;
 
-function showNourishNudge() {
-  document.getElementById('nourishNudge').style.display = 'block';
-}
-
-function hideNourishNudge() {
-  document.getElementById('nourishNudge').style.display = 'none';
-}
-
-// ── PLANNER ──────────────────────────────────────────
-function savePlanner() {
-  const items = [
-    { icon: '💞', label: 'Relationship', id: 'plan-relationship' },
-    { icon: '👨‍👩‍👧', label: 'Family', id: 'plan-family' },
-    { icon: '👯', label: 'Social', id: 'plan-social' },
-    { icon: '🌸', label: 'Me Time', id: 'plan-me' }
-  ];
-
-  const container = document.getElementById('savedIntentions');
-  container.innerHTML = '<div style="font-size:13px; color:var(--text-light); margin-bottom:12px;">This week\'s intentions 🌸</div>';
-
-  items.forEach(item => {
-    const val = document.getElementById(item.id).value;
-    if (val) {
-      container.innerHTML += `<div class="intention-pill"><span>${item.icon}</span><span>${item.label}: ${val}</span></div>`;
-    }
+  const fields = ['relationship', 'family', 'social', 'me'];
+  fields.forEach(f => {
+    const el = document.getElementById('plan-' + f);
+    if (el && saved[f]) el.value = saved[f];
   });
 
-  container.classList.add('visible');
-
-  const btn = event.target;
-  btn.textContent = 'Intentions saved 🌸';
-  setTimeout(() => { btn.textContent = 'Save this week\'s intentions 🌸'; }, 2000);
+  // Show saved intentions display
+  const items = [
+    { icon: '💞', label: 'Relationship', key: 'relationship' },
+    { icon: '👨‍👩‍👧', label: 'Family', key: 'family' },
+    { icon: '👯', label: 'Social', key: 'social' },
+    { icon: '🌸', label: 'Me Time', key: 'me' }
+  ];
+  const container = document.getElementById('savedIntentions');
+  let html = '<div style="font-size:13px; color:var(--text-light); margin-bottom:12px;">This week\'s intentions 🌸</div>';
+  let hasAny = false;
+  items.forEach(item => {
+    if (saved[item.key]) {
+      html += `<div class="intention-pill"><span>${item.icon}</span><span>${item.label}: ${saved[item.key]}</span></div>`;
+      hasAny = true;
+    }
+  });
+  if (hasAny) {
+    container.innerHTML = html;
+    container.classList.add('visible');
+  }
 }
 
-// ── START ─────────────────────────────────────────────
-init();
 </script>
 </body>
 </html>
