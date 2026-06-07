@@ -1410,9 +1410,9 @@ const ytLibrary = {
     quiet:      { title: "Inner Child Meditation", channel: "@TheHolisticPsychologist", url: "https://www.youtube.com/watch?v=Qnff_eRxIpE" }
   },
   evening: {
-    tired:    { title: "10 Min Morning Breathwork — The Key to Happiness", channel: "@BreatheWithSandy", url: "https://www.youtube.com/watch?v=Gb9YxCC5WBw" },
+    tired:    { title: "Yoga Nidra for Deep Rest & Sleep", channel: "@ChibsSleepMeditations", url: "https://www.youtube.com/watch?v=Ar1WRzIsrO4" },
     wired:    { title: "Crystal Bowls Deep Sleep & Chakra Healing 432Hz Sound Bath", channel: "@HealingChakraVibrations", url: "https://www.youtube.com/watch?v=KwTwKkaZv68" },
-    anxious:  { title: "Guided Meditation for Anxiety & Sleep (20 mins)", channel: "@ChibsSleepMeditations", url: "https://www.youtube.com/watch?v=Ar1WRzIsrO4" },
+    anxious:  { title: "Sleep Meditation for Anxiety — Calm a Busy Mind", channel: "@ChibsSleepMeditations", url: "https://www.youtube.com/watch?v=Ar1WRzIsrO4" },
     peaceful: { title: "Higher Heart Chakra Deep Sleep 432Hz Sound Bath", channel: "@HealingChakraVibrations", url: "https://www.youtube.com/watch?v=TlcTOwFnSrc" }
   }
 };
@@ -1495,23 +1495,20 @@ function init() {
 
 // ── RESTORE UI FROM STORAGE ──────────────────────────
 function restoreUI() {
-  // Restore NS dots
   if (state.nsState > 0) setNSState(state.nsState);
 
-  // Restore completed check-in cards
-  const trackerEmojis = { morning: '🌅', midmorning: '🌤', midday: '☀️', afternoon: '🌇', evening: '🌙' };
-  const trackerStates = { morning: 't1', midmorning: 't2', midday: 't3', afternoon: 't4', evening: 't5' };
   const cardMap = { morning: 0, midmorning: 1, midday: 2, afternoon: 3, evening: 4 };
+  const tEmojis = { morning: '🌅', midmorning: '🌤', midday: '☀️', afternoon: '🌇', evening: '🌙' };
+  const tStates = { morning: 't1', midmorning: 't2', midday: 't3', afternoon: 't4', evening: 't5' };
 
   Object.keys(state.checkins).forEach(type => {
-    if (state.checkins[type].done) {
-      // Update tracker dots
-      const prefix = trackerStates[type];
-      if (document.getElementById(prefix + 'emoji')) {
-        document.getElementById(prefix + 'emoji').textContent = trackerEmojis[type];
-        document.getElementById(prefix + 'state').textContent = 'Done ✓';
-      }
-      // Mark card as done
+    if (state.checkins[type] && state.checkins[type].done) {
+      const prefix = tStates[type];
+      const emojiEl = document.getElementById(prefix + 'emoji');
+      const stateEl = document.getElementById(prefix + 'state');
+      if (emojiEl) emojiEl.textContent = tEmojis[type];
+      if (stateEl) stateEl.textContent = 'Done ✓';
+
       const cards = document.querySelectorAll('.checkin-card');
       const card = cards[cardMap[type]];
       if (card) {
@@ -1521,24 +1518,17 @@ function restoreUI() {
     }
   });
 
-  // Restore counts
   document.getElementById('trackCheckins').textContent = checkinsCompleted + ' of 5';
   document.getElementById('eodCheckins').textContent = checkinsCompleted + ' of 5';
   document.getElementById('trackPractices').textContent = state.practicesAttempted;
   document.getElementById('eodPractices').textContent = state.practicesAttempted;
 
-  // Restore RISE
-  if (state.riseScore) {
-    document.getElementById('eodSleep').textContent = state.riseScore;
-  }
-
-  // Restore insight
+  if (state.riseScore) document.getElementById('eodSleep').textContent = state.riseScore;
   if (daily.insight) {
     document.getElementById('dailyInsight').textContent = daily.insight;
     document.getElementById('eodInsight').textContent = daily.insight;
   }
 }
-
 // ── RESTORE PLANNER ──────────────────────────────────
 function restorePlanner() {
   const saved = loadPlanner();
