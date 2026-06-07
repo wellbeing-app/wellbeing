@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="🌿 Wellbeing">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#3D5A47">
+<title>Your Wellbeing Companion 🌿</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F7F3EC;
+    --cream-dark: #EDE7DA;
+    --green-deep: #3D5A47;
+    --green-mid: #5C7A65;
+    --green-light: #A8C4AC;
+    --green-pale: #D6E8D8;
+    --warm-brown: #8B6F5E;
+    --warm-brown-light: #C4A992;
+    --text-dark: #2C3A30;
+    --text-mid: #5A6B5E;
+    --text-light: #8A9E8E;
+    --gold: #C9A96E;
+    --gold-light: #E8D5B0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--cream);
+    color: var(--text-dark);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .app-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 0 80px;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(160deg, var(--green-deep) 0%, var(--green-mid) 100%);
+    padding: calc(48px + env(safe-area-inset-top)) 28px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -20px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 50%;
+  }
+
+  .header-date {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green-light);
+    margin-bottom: 12px;
+  }
+
+  .header-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--cream);
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .header-subtitle {
+    font-size: 13px;
+    color: rgba(214, 232, 216, 0.7);
+    font-weight: 300;
+  }
+
+  .nervous-system-bar {
+    margin-top: 24px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ns-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--green-light);
+    flex-shrink: 0;
+  }
+
+  .ns-dots {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .ns-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: all 0.4s ease;
+    cursor: pointer;
+  }
+  .ns-dot.active { background: var(--gold); transform: scale(1.2); }
+  .ns-dot.filled { background: rgba(255,255,255,0.5); }
+
+  .ns-state {
+    font-size: 12px;
+    color: var(--gold-light);
+    font-style: italic;
+    flex-shrink: 0;
+  }
+
+  /* NAV TABS */
+  .nav-tabs {
+    background: var(--cream-dark);
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-bottom: 1px solid rgba(93,122,101,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+
+  .nav-tab {
+    flex-shrink: 0;
+    padding: 14px 18px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--text-light);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+  }
+  .nav-tab:hover { color: var(--green-mid); }
+  .nav-tab.active {
+    color: var(--green-deep);
+    border-bottom-color: var(--green-deep);
+    font-weight: 500;
+  }
+
+  /* SECTIONS */
+  .section { display: none; padding: 0 20px; }
+  .section.active { display: block; }
+
+  /* CHECK-IN CARDS */
+  .checkin-card {
+    background: white;
+    border-radius: 20px;
+    margin: 20px 0;
+    overflow: hidden;
+    box-shadow: 0 2px 20px rgba(61,90,71,0.06);
+    transition: transform 0.2s;
+  }
+
+  .card-header {
+    padding: 20px 22px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+
+  .card-emoji {
+    font-size: 22px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .card-meta { flex: 1; }
+
+  .card-time {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--warm-brown-light);
+    margin-bottom: 4px;
+  }
+
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--text-dark);
+    line-height: 1.2;
+  }
+
+  .card-status {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--cream-dark);
+    color: var(--text-light);
+    flex-shrink: 0;
+  }
+  .card-status.done { background: var(--green-pale); color: var(--green-deep); }
+  .card-status.now { background: var(--gold-light); color: var(--warm-brown); }
+
+  .card-body { padding: 20px 22px; }
+
+  .affirmation {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-style: italic;
+    color: var(--green-mid);
+    line-height: 1.5;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    background: var(--green-pale);
+    border-radius: 12px;
+    border-left: 3px solid var(--green-light);
+  }
+
+  .question-block { margin-bottom: 20px; }
+
+  .question-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .options-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .option-btn {
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--cream-dark);
+    background: var(--cream);
+    color: var(--text-mid);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1.3;
+  }
+
+  .option-btn:hover {
+    border-color: var(--green-light);
+    background: var(--green-pale);
+    color: var(--green-deep);
+  }
+
+  .option-btn.selected {
+    border-color: var(--green-mid);
+    background: var(--green-pale);
+    color: var(--green-deep);
+    font-weight: 500;
+  }
+
+  .option-btn.not-now {
+    border-style: dashed;
+    color: var(--text-light);
+  }
+
+  .text-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 12px;
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--text-dark);
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    min-height: 70px;
+  }
+  .text-input:focus { border-color: var(--green-light); }
+  .text-input::placeholder { color: var(--text-light); }
+
+  /* YOUTUBE SUGGESTION */
+  .youtube-suggestion {
+    background: linear-gradient(135deg, var(--green-deep), var(--green-mid));
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-top: 16px;
+    display: none;
+  }
+  .youtube-suggestion.visible { display: block; }
+
+  .yt-intro {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--green-light);
+    margin-bottom: 10px;
+  }
+
+  .yt-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--cream);
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .yt-channel {
+    font-size: 12px;
+    color: rgba(214,232,216,0.7);
+    margin-bottom: 14px;
+  }
+
+  .two-min-note {
+    font-size: 12px;
+    color: var(--gold-light);
+    font-style: italic;
+    margin-bottom: 14px;
+    line-height: 1.4;
+  }
+
+  .yt-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.15);
+    color: var(--cream);
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+  .yt-link:hover { background: rgba(255,255,255,0.25); }
+
+  .after-practice {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: none;
+  }
+  .after-practice.visible { display: block; }
+  .after-practice .question-label { color: var(--green-light); font-size: 12px; }
+  .after-practice .option-btn {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+    color: var(--cream);
+    font-size: 12px;
+  }
+  .after-practice .option-btn.selected,
+  .after-practice .option-btn:hover {
+    background: rgba(255,255,255,0.25);
+    border-color: rgba(255,255,255,0.4);
+    color: white;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--green-deep);
+    color: var(--cream);
+    border: none;
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.2s;
+  }
+  .submit-btn:hover { background: var(--green-mid); transform: translateY(-1px); }
+
+  /* RISE FIELD */
+  .rise-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--cream);
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 12px;
+  }
+  .rise-icon { font-size: 18px; }
+  .rise-input {
+    flex: 1;
+    border: none;
+    background: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text-dark);
+    outline: none;
+  }
+  .rise-input::placeholder { color: var(--text-light); }
+
+  /* TRACKER */
+  .tracker-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin: 20px 0;
+  }
+
+  .tracker-item {
+    background: white;
+    border-radius: 14px;
+    padding: 14px 8px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(61,90,71,0.05);
+  }
+
+  .tracker-time {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 8px;
+  }
+
+  .tracker-emoji { font-size: 20px; margin-bottom: 6px; }
+
+  .tracker-state {
+    font-size: 10px;
+    color: var(--text-mid);
+    line-height: 1.3;
+  }
+
+  /* SUMMARY */
+  .summary-card {
+    background: white;
+    border-radius: 20px;
+    padding: 22px;
+    margin: 16px 0;
+    box-shadow: 0 2px 20px rgba(61,90,71,0.06);
+  }
+
+  .summary-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--text-dark);
+    margin-bottom: 16px;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--cream-dark);
+    font-size: 13px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { color: var(--text-mid); }
+  .summary-value { color: var(--green-deep); font-weight: 500; }
+
+  .insight-block {
+    background: linear-gradient(135deg, var(--green-pale), var(--cream));
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  .insight-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green-mid);
+    margin-bottom: 8px;
+  }
+
+  .insight-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-style: italic;
+    color: var(--text-dark);
+    line-height: 1.5;
+  }
+
+  /* WEEKLY PLANNER */
+  .planner-card {
+    background: white;
+    border-radius: 20px;
+    margin: 16px 0;
+    overflow: hidden;
+    box-shadow: 0 2px 20px rgba(61,90,71,0.06);
+  }
+
+  .planner-header {
+    background: linear-gradient(135deg, var(--warm-brown), var(--warm-brown-light));
+    padding: 20px 22px;
+  }
+
+  .planner-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--cream);
+    margin-bottom: 4px;
+  }
+
+  .planner-sub {
+    font-size: 12px;
+    color: rgba(247,243,236,0.7);
+  }
+
+  .planner-body { padding: 20px 22px; }
+
+  .planner-item {
+    margin-bottom: 18px;
+  }
+
+  .planner-item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .planner-icon { font-size: 18px; }
+
+  .planner-item-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dark);
+  }
+
+  .planner-item-sub {
+    font-size: 11px;
+    color: var(--text-light);
+    margin-left: auto;
+    font-style: italic;
+  }
+
+  .planner-input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--cream-dark);
+    border-radius: 10px;
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text-dark);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .planner-input:focus { border-color: var(--green-light); }
+  .planner-input::placeholder { color: var(--text-light); }
+
+  .planner-save-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--warm-brown);
+    color: var(--cream);
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: all 0.2s;
+  }
+  .planner-save-btn:hover { background: var(--warm-brown-light); }
+
+  .week-intentions {
+    margin-top: 20px;
+    display: none;
+  }
+  .week-intentions.visible { display: block; }
+
+  .intention-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--cream-dark);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--text-mid);
+  }
+
+  /* ALARM SETUP */
+  .alarm-card {
+    background: white;
+    border-radius: 20px;
+    padding: 22px;
+    margin: 16px 0;
+    box-shadow: 0 2px 20px rgba(61,90,71,0.06);
+  }
+
+  .alarm-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    color: var(--text-dark);
+    margin-bottom: 16px;
+  }
+
+  .alarm-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--cream-dark);
+  }
+  .alarm-item:last-of-type { border-bottom: none; }
+
+  .alarm-emoji { font-size: 18px; flex-shrink: 0; }
+  .alarm-time { font-weight: 500; font-size: 14px; color: var(--text-dark); width: 56px; flex-shrink: 0; }
+  .alarm-name { font-size: 13px; color: var(--text-mid); flex: 1; }
+  .alarm-check { font-size: 16px; color: var(--green-light); }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: white;
+    border-top: 1px solid var(--cream-dark);
+    display: flex;
+    padding: 10px 0 calc(18px + env(safe-area-inset-bottom));
+    z-index: 200;
+    box-shadow: 0 -4px 20px rgba(61,90,71,0.08);
+  }
+
+  .bottom-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    transition: all 0.2s;
+  }
+
+  .bottom-nav-btn .nav-icon { font-size: 20px; }
+  .bottom-nav-btn .nav-label { font-size: 10px; letter-spacing: 0.04em; color: var(--text-light); font-family: 'DM Sans', sans-serif; }
+  .bottom-nav-btn.active .nav-label { color: var(--green-deep); font-weight: 500; }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section.active { animation: fadeIn 0.3s ease forwards; }
+
+  .pulse {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-date" id="headerDate">Sunday, 8 June 2025</div>
+    <div class="header-title">Good morning, <br>you're doing well 🌿</div>
+    <div class="header-subtitle">Your gentle companion for today</div>
+    <div class="nervous-system-bar">
+      <div class="ns-label">NS State</div>
+      <div class="ns-dots" id="nsDots">
+        <div class="ns-dot" onclick="setNSState(1)"></div>
+        <div class="ns-dot" onclick="setNSState(2)"></div>
+        <div class="ns-dot" onclick="setNSState(3)"></div>
+        <div class="ns-dot" onclick="setNSState(4)"></div>
+        <div class="ns-dot" onclick="setNSState(5)"></div>
+      </div>
+      <div class="ns-state" id="nsStateLabel">tap to update</div>
+    </div>
+  </div>
+
+  <!-- NAV TABS -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('today')">Today</button>
+    <button class="nav-tab" onclick="showSection('tracker')">Tracker</button>
+    <button class="nav-tab" onclick="showSection('planner')">Week</button>
+    <button class="nav-tab" onclick="showSection('summary')">Summary</button>
+    <button class="nav-tab" onclick="showSection('setup')">Setup</button>
+  </div>
+
+  <!-- TODAY SECTION -->
+  <div class="section active" id="section-today">
+
+    <!-- MORNING CHECK-IN -->
+    <div class="checkin-card">
+      <div class="card-header">
+        <div class="card-emoji">🌅</div>
+        <div class="card-meta">
+          <div class="card-time">6:30am · Morning Anchor</div>
+          <div class="card-title">How did the night hold you?</div>
+        </div>
+        <div class="card-status now">Now</div>
+      </div>
+      <div class="card-body">
+
+        <div class="affirmation" id="morningAffirmation">
+          "What's one small thing you're glad exists this morning?"
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">✨ Your morning reflection</div>
+          <textarea class="text-input" placeholder="Write freely here… no wrong answers" id="morningReflection"></textarea>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">📱 RISE: Energy Potential today</div>
+          <div class="rise-field">
+            <span class="rise-icon">⚡</span>
+            <input type="text" class="rise-input" placeholder="e.g. 74% — peak at 10am" id="riseEnergy">
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">📱 RISE: Sleep Debt</div>
+          <div class="rise-field">
+            <span class="rise-icon">🌙</span>
+            <input type="text" class="rise-input" placeholder="e.g. 1h 20min" id="riseSleepDebt">
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">How did you sleep?</div>
+          <div class="options-grid">
+            <button class="option-btn" onclick="selectOption(this, 'sleep')">Really well 😌</button>
+            <button class="option-btn" onclick="selectOption(this, 'sleep')">OK, could be better</button>
+            <button class="option-btn" onclick="selectOption(this, 'sleep')">Broken sleep 😔</button>
+            <button class="option-btn" onclick="selectOption(this, 'sleep')">Exhausted</button>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Where's your nervous system right now?</div>
+          <div class="options-grid">
+            <button class="option-btn" onclick="selectOption(this, 'nsmorning'); showYT('morningYT', 'calm')">Calm 🌿</button>
+            <button class="option-btn" onclick="selectOption(this, 'nsmorning'); showYT('morningYT', 'wired')">A little wired</button>
+            <button class="option-btn" onclick="selectOption(this, 'nsmorning'); showYT('morningYT', 'stressed')">Already stressed 😬</button>
+            <button class="option-btn" onclick="selectOption(this, 'nsmorning'); showYT('morningYT', 'empty')">Running on empty</button>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">How much time do you have right now?</div>
+          <div class="options-grid">
+            <button class="option-btn" onclick="selectOption(this, 'morningTime')">Just 2 mins</button>
+            <button class="option-btn" onclick="selectOption(this, 'morningTime')">5 mins</button>
+            <button class="option-btn" onclick="selectOption(this, 'morningTime')">10+ mins</button>
+            <button class="option-btn not-now" onclick="selectOption(this, 'morningTime'); hideYT('morningYT')">Not now</button>
+          </div>
+        </div>
+
+        <div class="youtube-suggestion" id="morningYT">
+          <div class="yt-intro">✨ Your morning practice</div>
+          <div class="yt-title" id="morningYTTitle">5-Minute Morning Stretch to Start Your Day</div>
+          <div class="yt-channel" id="morningYTChannel">@BreatheWithSandy</div>
+          <div class="two-min-note">💛 You only need to do 2 minutes. Start, and stop whenever you like. Any amount counts.</div>
+          <a href="#" class="yt-link" id="morningYTLink" target="_blank">▶ Open on YouTube</a>
+          <div class="after-practice" id="morningAfter">
+            <div class="question-label">How do you feel after that?</div>
+            <div class="options-grid">
+              <button class="option-btn" onclick="selectOption(this, 'morningAfter')">Better 💚</button>
+              <button class="option-btn" onclick="selectOption(this, 'morningAfter')">About the same</button>
+              <button class="option-btn" onclick="selectOption(this, 'morningAfter')">Didn't do it</button>
+              <button class="option-btn not-now" onclick="selectOption(this, 'morningAfter')">Not now</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="submit-btn" onclick="saveCheckin('morning')">Save morning check-in 🌿</button>
+      </div>
+    </div>
+
+    <!-- MID-MORNING -->
+    <div class="checkin-card">
+      <div class="card-header">
+        <div class="card-emoji">🌤</div>
+        <div class="card-meta">
+          <div class="card-time">9:30am · Mid-Morning Reset</div>
+          <div class="card-title" id="midMorningTitle">The transition bridge</div>
+        </div>
+        <div class="card-status">9:30am</div>
+      </div>
+      <div class="card-body">
+
+        <div class="question-block">
+          <div class="question-label" id="midMorningQ1">Where are you holding tension right now?</div>
+          <div class="options-grid">
+            <button class="option-btn" onclick="selectOption(this, 'tension'); showMicroAction('shoulders')">Shoulders 😤</button>
+            <button class="option-btn" onclick="selectOption(this, 'tension'); showMicroAction('jaw')">Jaw</button>
+            <button class="option-btn" onclick="selectOption(this, 'tension'); showMicroAction('chest')">Chest</button>
+            <button class="option-btn" onclick="selectOption(this, 'tension'); showMicroAction('stomach')">Stomach</button>
+            <button class="option-btn" onclick="selectOption(this, 'tension'); showMicroAction('ok')">I'm OK 🌿</button>
+          </div>
+        </div>
+
+        <div class="question-block" id="microAction" style="display:none;">
+          <div class="affirmation" id="microActionText"></div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Anything on your mind you'd like to note?</div>
+          <textarea class="text-input" placeholder="No pressure — just a space to put things down…" id="midMorningNote"></textarea>
+        </div>
+
+        <button class="submit-btn" onclick="saveCheckin('midmorning')">Save check-in 🌿</button>
+      </div>
+    </div>
+
+    <!-- MIDDAY -->
+    <div class="checkin-card">
+      <div class="card-header">
+        <div class="card-emoji">☀️</div>
+        <div class="card-meta">
+          <div class="card-time">12:30pm · Midday Pause</div>
+          <div class="card-title">Reclaiming a sliver of midday</div>
+        </div>
+        <div class="card-status">12:30pm</div>
+      </div>
+      <div class="card-body">
+
+        <div class="question-block">
+          <div class="question-label">How's your energy right now?</div>
+          <div class="options-grid">
+            <button class="option-btn" onclick="selectOption(this, 'midEnergy')">Still going 💪</button>
+            <button class="option-btn" onclick="selectOption(this, 'midEnergy')">Flagging a bit</button>
+            <button class="option-btn" onclick="selectOption(this, 'midEnergy')">Running on fumes</button>
+            <button class="option-btn" onclick="selectOption(this, 'midEnergy')">Surprisingly OK</button>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Have you had water and something to eat?</div>
+          <div class="options-grid">
+            <button class="option-btn" onclick="selectOption(this, 'nourish'); hideNourishNudge()">Yes, both ✓</button>
+            <button class="option-btn" onclick="selectOption(this, 'nourish'); hideNourishNudge()">Just water</button>
+            <button class="option-btn" onclick="selectOption(this, 'nourish'); showNourishNudge()">Not yet 😬</button>
+            <button class="option-btn" onclick="selectOption(this, 'nourish'); hideNourishNudge()">Working on it</button>
+          </div>
+        </div>
+
+        <div id="nourishNudge" style="display:none;">
+          <div class="affirmation" style="border-left-color: var(--gold); background: var(--gold-light);">
+            💛 Your body needs fuel to regulate. Even a banana or handful of nuts counts. Come back and tick this off when you've had something.
+          </div>
+          <div class="question-block">
+            <div class="question-label">Done — had something to eat ✓</div>
+            <div class="options-grid">
+              <button class="option-btn" onclick="selectOption(this, 'nourish'); hideNourishNudge()">Yes, eaten now 🍽️</button>
+              <button class="option-btn not-now" onclick="hideNourishNudge()">Not now</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="affirmation">
+          💧 Even 60 seconds outside or one slow breath counts as a lunch break for your nervous system.
+        </div>
+
+        <button class="submit-btn" onclick="saveCheckin('midday')">Save check-in 🌿</button>
+      </div>
+    </div>
+
+    <!-- AFTERNOON TRANSITION -->
+    <div class="checkin-card">
+      <div class="card-header">
+        <div class="card-emoji">🌇</div>
+        <div class="card-meta">
+          <div class="card-time">2:45pm · Afternoon Transition</div>
+          <div class="card-title">The shift between worlds</div>
+        </div>
+        <div class="card-status">2:45pm</div>
+      </div>
+      <div class="card-body">
+
+        <div class="question-block">
+          <div class="question-label">Rate your day so far</div>
+          <div class="options-grid">
+            <button class="option-btn" onclick="selectOption(this, 'dayRate')">Manageable 🌿</button>
+            <button class="option-btn" onclick="selectOption(this, 'dayRate')">Tough but going</button>
+            <button class="option-btn" onclick="selectOption(this, 'dayRate')">Really hard today</button>
+            <button class="option-btn" onclick="selectOption(this, 'dayRate')">Actually good 💚</button>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">What do you need most right now?</div>
+          <div class="options-grid">
+            <button class="option-btn" onclick="selectOption(this, 'afternoonNeed'); showYT('afternoonYT', 'decompress')">To decompress</button>
+            <button class="option-btn" onclick="selectOption(this, 'afternoonNeed'); showYT('afternoonYT', 'move')">To move my body</button>
+            <button class="option-btn" onclick="selectOption(this, 'afternoonNeed'); showYT('afternoonYT', 'connect')">To connect</button>
+            <button class="option-btn" onclick="selectOption(this, 'afternoonNeed'); showYT('afternoonYT', 'quiet')">Just 5 mins quiet</button>
+            <button class="option-btn not-now" onclick="selectOption(this, 'afternoonNeed'); hideYT('afternoonYT')">Not now</button>
+          </div>
+        </div>
+
+        <div class="youtube-suggestion" id="afternoonYT">
+          <div class="yt-intro">✨ Your afternoon reset</div>
+          <div class="yt-title" id="afternoonYTTitle">Afternoon Tension Release Stretch</div>
+          <div class="yt-channel" id="afternoonYTChannel">@BreatheWithSandy</div>
+          <div class="two-min-note">💛 Just start. Two minutes, then stop if you're not feeling it. You've already done enough today.</div>
+          <a href="#" class="yt-link" id="afternoonYTLink" target="_blank">▶ Open on YouTube</a>
+          <div class="after-practice" id="afternoonAfter">
+            <div class="question-label">How do you feel after that?</div>
+            <div class="options-grid">
+              <button class="option-btn" onclick="selectOption(this, 'afternoonAfter')">Better 💚</button>
+              <button class="option-btn" onclick="selectOption(this, 'afternoonAfter')">About the same</button>
+              <button class="option-btn" onclick="selectOption(this, 'afternoonAfter')">Didn't do it</button>
+              <button class="option-btn not-now" onclick="selectOption(this, 'afternoonAfter')">Not now</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="submit-btn" onclick="saveCheckin('afternoon')">Save check-in 🌿</button>
+      </div>
+    </div>
+
+    <!-- EVENING WIND-DOWN -->
+    <div class="checkin-card">
+      <div class="card-header">
+        <div class="card-emoji">🌙</div>
+        <div class="card-meta">
+          <div class="card-time">8:30pm · Evening Wind-Down</div>
+          <div class="card-title">The day releasing its grip</div>
+        </div>
+        <div class="card-status">8:30pm</div>
+      </div>
+      <div class="card-body">
+
+        <div class="affirmation" id="eveningPrompt">
+          "What was your favourite small moment today — even a tiny one?"
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">Your reflection for tonight</div>
+          <textarea class="text-input" placeholder="Write freely… this is just for you" id="eveningReflection"></textarea>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">How's your body feeling right now?</div>
+          <div class="options-grid">
+            <button class="option-btn" onclick="selectOption(this, 'eveningBody'); showYT('eveningYT', 'tired')">Tired but OK 😌</button>
+            <button class="option-btn" onclick="selectOption(this, 'eveningBody'); showYT('eveningYT', 'wired')">Wired, can't switch off</button>
+            <button class="option-btn" onclick="selectOption(this, 'eveningBody'); showYT('eveningYT', 'anxious')">Anxious</button>
+            <button class="option-btn" onclick="selectOption(this, 'eveningBody'); showYT('eveningYT', 'peaceful')">Peaceful 🌿</button>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">How much time do you have?</div>
+          <div class="options-grid">
+            <button class="option-btn" onclick="selectOption(this, 'eveningTime')">Just 2 mins</button>
+            <button class="option-btn" onclick="selectOption(this, 'eveningTime')">5–10 mins</button>
+            <button class="option-btn" onclick="selectOption(this, 'eveningTime')">20+ mins 🙏</button>
+            <button class="option-btn not-now" onclick="selectOption(this, 'eveningTime'); hideYT('eveningYT')">Not tonight</button>
+          </div>
+        </div>
+
+        <div class="youtube-suggestion" id="eveningYT">
+          <div class="yt-intro">🌙 Your wind-down practice</div>
+          <div class="yt-title" id="eveningYTTitle">Yoga Nidra for Deep Rest & Sleep</div>
+          <div class="yt-channel" id="eveningYTChannel">@ChibsSleepMeditations</div>
+          <div class="two-min-note">💛 You've carried a lot today. Even just lying down and pressing play is enough.</div>
+          <a href="#" class="yt-link" id="eveningYTLink" target="_blank">▶ Open on YouTube</a>
+          <div class="after-practice" id="eveningAfter">
+            <div class="question-label">How do you feel after that?</div>
+            <div class="options-grid">
+              <button class="option-btn" onclick="selectOption(this, 'eveningAfter')">More settled 💚</button>
+              <button class="option-btn" onclick="selectOption(this, 'eveningAfter')">About the same</button>
+              <button class="option-btn" onclick="selectOption(this, 'eveningAfter')">Fell asleep 😴</button>
+              <button class="option-btn not-now" onclick="selectOption(this, 'eveningAfter')">Not now</button>
+            </div>
+          </div>
+        </div>
+
+        <button class="submit-btn" onclick="saveCheckin('evening')">Close the day gently 🌙</button>
+      </div>
+    </div>
+
+  </div><!-- end today -->
+
+  <!-- TRACKER SECTION -->
+  <div class="section" id="section-tracker">
+    <div style="padding: 20px 0 0;">
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--text-dark); margin-bottom: 4px;">Your day so far</div>
+      <div style="font-size: 13px; color: var(--text-light);">Nervous system journey across today</div>
+    </div>
+
+    <div class="tracker-grid" id="trackerGrid">
+      <div class="tracker-item">
+        <div class="tracker-time">6:30am</div>
+        <div class="tracker-emoji" id="t1emoji">⭕</div>
+        <div class="tracker-state" id="t1state">Not yet</div>
+      </div>
+      <div class="tracker-item">
+        <div class="tracker-time">9:30am</div>
+        <div class="tracker-emoji" id="t2emoji">⭕</div>
+        <div class="tracker-state" id="t2state">Not yet</div>
+      </div>
+      <div class="tracker-item">
+        <div class="tracker-time">12:30pm</div>
+        <div class="tracker-emoji" id="t3emoji">⭕</div>
+        <div class="tracker-state" id="t3state">Not yet</div>
+      </div>
+      <div class="tracker-item">
+        <div class="tracker-time">2:45pm</div>
+        <div class="tracker-emoji" id="t4emoji">⭕</div>
+        <div class="tracker-state" id="t4state">Not yet</div>
+      </div>
+      <div class="tracker-item">
+        <div class="tracker-time">8:30pm</div>
+        <div class="tracker-emoji" id="t5emoji">⭕</div>
+        <div class="tracker-state" id="t5state">Not yet</div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-title">Today's picture</div>
+      <div class="summary-row">
+        <div class="summary-label">Check-ins completed</div>
+        <div class="summary-value" id="trackCheckins">0 of 5</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Practices attempted</div>
+        <div class="summary-value" id="trackPractices">0</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">NS state (morning)</div>
+        <div class="summary-value" id="trackNSMorning">—</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">NS state (evening)</div>
+        <div class="summary-value" id="trackNSEvening">—</div>
+      </div>
+      <div class="insight-block">
+        <div class="insight-label">Today's gentle insight</div>
+        <div class="insight-text" id="dailyInsight">Complete your first check-in to see your insight for today.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEEK PLANNER -->
+  <div class="section" id="section-planner">
+    <div style="padding: 20px 0 10px;">
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--text-dark); margin-bottom: 4px;">Sunday Planner 🌸</div>
+      <div style="font-size: 13px; color: var(--text-light);">Sketch the week ahead with intention</div>
+    </div>
+
+    <div class="planner-card">
+      <div class="planner-header">
+        <div class="planner-title">Week of <span id="weekOf">—</span></div>
+        <div class="planner-sub">Four intentions. That's all you need.</div>
+      </div>
+      <div class="planner-body">
+
+        <div class="planner-item">
+          <div class="planner-item-header">
+            <div class="planner-icon">💞</div>
+            <div class="planner-item-label">Relationship</div>
+            <div class="planner-item-sub">1 moment of real connection</div>
+          </div>
+          <input class="planner-input" type="text" placeholder="e.g. Cook dinner together, an evening walk…" id="plan-relationship">
+        </div>
+
+        <div class="planner-item">
+          <div class="planner-item-header">
+            <div class="planner-icon">👨‍👩‍👧</div>
+            <div class="planner-item-label">Family</div>
+            <div class="planner-item-sub">1 thing the kids will remember</div>
+          </div>
+          <input class="planner-input" type="text" placeholder="e.g. Board game night, a walk, baking…" id="plan-family">
+        </div>
+
+        <div class="planner-item">
+          <div class="planner-item-header">
+            <div class="planner-icon">👯</div>
+            <div class="planner-item-label">Social</div>
+            <div class="planner-item-sub">1 friend moment</div>
+          </div>
+          <input class="planner-input" type="text" placeholder="e.g. Coffee, voice note, a short walk…" id="plan-social">
+        </div>
+
+        <div class="planner-item">
+          <div class="planner-item-header">
+            <div class="planner-icon">🌸</div>
+            <div class="planner-item-label">Me Time</div>
+            <div class="planner-item-sub">1 thing only for you</div>
+          </div>
+          <input class="planner-input" type="text" placeholder="e.g. A bath, reading, a solo walk…" id="plan-me">
+        </div>
+
+        <button class="planner-save-btn" onclick="savePlanner()">Save this week's intentions 🌸</button>
+
+        <div class="week-intentions" id="savedIntentions"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY SECTION -->
+  <div class="section" id="section-summary">
+    <div style="padding: 20px 0 0;">
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--text-dark); margin-bottom: 4px;">Your patterns</div>
+      <div style="font-size: 13px; color: var(--text-light);">End of day · Week · Month</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-title">End of Day 🌙</div>
+      <div class="summary-row">
+        <div class="summary-label">Check-ins done today</div>
+        <div class="summary-value" id="eodCheckins">0 of 5</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Practices completed</div>
+        <div class="summary-value" id="eodPractices">0</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">RISE: Energy & Sleep Debt</div>
+        <div class="summary-value" id="eodSleep">—</div>
+      </div>
+      <div class="insight-block">
+        <div class="insight-label">Today's reflection</div>
+        <div class="insight-text" id="eodInsight">Your day's summary will appear here as you complete check-ins.</div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-title">This Week 📅</div>
+      <div class="summary-row">
+        <div class="summary-label">Days with check-ins</div>
+        <div class="summary-value" id="weekDays">—</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Practices this week</div>
+        <div class="summary-value" id="weekPractices">—</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Hardest day</div>
+        <div class="summary-value" id="weekHardest">—</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Best moment noted</div>
+        <div class="summary-value" id="weekBest">—</div>
+      </div>
+      <div class="insight-block">
+        <div class="insight-label">Weekly pattern</div>
+        <div class="insight-text" id="weekInsight">Your weekly patterns will build here over time. Keep showing up — even imperfectly.</div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-title">This Month 🌿</div>
+      <div class="insight-block">
+        <div class="insight-label">Monthly reflection</div>
+        <div class="insight-text">Your monthly story begins with today. Each check-in is a data point that belongs to you.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETUP SECTION -->
+  <div class="section" id="section-setup">
+    <div style="padding: 20px 0 0;">
+      <div style="font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--text-dark); margin-bottom: 4px;">Your Setup 🌿</div>
+      <div style="font-size: 13px; color: var(--text-light);">iPhone alarms & personalisation</div>
+    </div>
+
+    <div class="alarm-card">
+      <div class="alarm-title">Set these 5 alarms on your iPhone</div>
+      <p style="font-size: 13px; color: var(--text-light); margin-bottom: 16px; line-height: 1.6;">Open Clock → Alarm → + and add each one. Name them exactly as below so they feel like invitations, not demands.</p>
+
+      <div class="alarm-item">
+        <div class="alarm-emoji">🌅</div>
+        <div class="alarm-time">6:30am</div>
+        <div class="alarm-name">🌅 Morning moment</div>
+        <div class="alarm-check">☐</div>
+      </div>
+      <div class="alarm-item">
+        <div class="alarm-emoji">🌤</div>
+        <div class="alarm-time">9:30am</div>
+        <div class="alarm-name">🌤 Check in</div>
+        <div class="alarm-check">☐</div>
+      </div>
+      <div class="alarm-item">
+        <div class="alarm-emoji">💧</div>
+        <div class="alarm-time">12:30pm</div>
+        <div class="alarm-name">💧 Midday pause</div>
+        <div class="alarm-check">☐</div>
+      </div>
+      <div class="alarm-item">
+        <div class="alarm-emoji">🌇</div>
+        <div class="alarm-time">2:45pm</div>
+        <div class="alarm-name">🌇 Transition</div>
+        <div class="alarm-check">☐</div>
+      </div>
+      <div class="alarm-item">
+        <div class="alarm-emoji">🌙</div>
+        <div class="alarm-time">8:30pm</div>
+        <div class="alarm-name">🌙 Wind down</div>
+        <div class="alarm-check">☐</div>
+      </div>
+    </div>
+
+    <div class="alarm-card">
+      <div class="alarm-title">Your YouTube channels 🎬</div>
+      <p style="font-size: 13px; color: var(--text-light); margin-bottom: 14px; line-height: 1.6;">Your curated toolkit, matched to mood and time available:</p>
+      <div class="summary-row">
+        <div class="summary-label">Movement & breath</div>
+        <div class="summary-value">@BreatheWithSandy</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Healing frequencies</div>
+        <div class="summary-value">@HealingChakraVibrations</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Sleep & rest</div>
+        <div class="summary-value">@ChibsSleepMeditations</div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-label">Meditation only</div>
+        <div class="summary-value">@TheHolisticPsychologist</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end app-wrap -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bottom-nav-btn active" onclick="showSection('today'); setBottomNav(this)">
+    <span class="nav-icon">🌿</span>
+    <span class="nav-label">Today</span>
+  </button>
+  <button class="bottom-nav-btn" onclick="showSection('tracker'); setBottomNav(this)">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Tracker</span>
+  </button>
+  <button class="bottom-nav-btn" onclick="showSection('planner'); setBottomNav(this)">
+    <span class="nav-icon">📅</span>
+    <span class="nav-label">Week</span>
+  </button>
+  <button class="bottom-nav-btn" onclick="showSection('summary'); setBottomNav(this)">
+    <span class="nav-icon">✨</span>
+    <span class="nav-label">Summary</span>
+  </button>
+  <button class="bottom-nav-btn" onclick="showSection('setup'); setBottomNav(this)">
+    <span class="nav-icon">⚙️</span>
+    <span class="nav-label">Setup</span>
+  </button>
+</div>
+
+<script>
+// ── DATA STORE ──────────────────────────────────────
+const state = {
+  checkins: { morning: {}, midmorning: {}, midday: {}, afternoon: {}, evening: {} },
+  nsState: 0,
+  practicesAttempted: 0,
+  practicesFelt: [],
+  riseScore: '',
+  planner: {}
+};
+
+// ── YOUTUBE LIBRARY ─────────────────────────────────
+const ytLibrary = {
+  morning: {
+    calm:    { title: "15 Min Morning Breathwork — Feel Energised & Focused", channel: "@BreatheWithSandy", url: "https://www.youtube.com/watch?v=zWdrqd66H2Y" },
+    wired:   { title: "Perfect Morning Breathwork to Lower Stress & Boost Energy", channel: "@BreatheWithSandy", url: "https://www.youtube.com/watch?v=cQgsDGBHCnk" },
+    stressed:{ title: "The Simplest Breathwork to Release All Stress & Tension", channel: "@BreatheWithSandy", url: "https://www.youtube.com/watch?v=VIs2f8Eq7nQ" },
+    empty:   { title: "5 Min Motivating Morning Breathwork (3 rounds)", channel: "@BreatheWithSandy", url: "https://www.youtube.com/watch?v=5Ho04GadHWE" }
+  },
+  afternoon: {
+    decompress: { title: "Wise Inner Parent Meditation", channel: "@TheHolisticPsychologist", url: "https://www.youtube.com/watch?v=VkwjJzhOf-A" },
+    move:       { title: "10 Min Energy Breathwork Routine", channel: "@BreatheWithSandy", url: "https://www.youtube.com/watch?v=BcayO9W3ZDI" },
+    connect:    { title: "Root Chakra Healing — Let Go of Worries & Anxiety", channel: "@HealingChakraVibrations", url: "https://www.youtube.com/watch?v=ev1TbjL_Www" },
+    quiet:      { title: "Inner Child Meditation", channel: "@TheHolisticPsychologist", url: "https://www.youtube.com/watch?v=Qnff_eRxIpE" }
+  },
+  evening: {
+    tired:    { title: "10 Min Morning Breathwork — The Key to Happiness", channel: "@BreatheWithSandy", url: "https://www.youtube.com/watch?v=Gb9YxCC5WBw" },
+    wired:    { title: "Crystal Bowls Deep Sleep & Chakra Healing 432Hz Sound Bath", channel: "@HealingChakraVibrations", url: "https://www.youtube.com/watch?v=KwTwKkaZv68" },
+    anxious:  { title: "Guided Meditation for Anxiety & Sleep (20 mins)", channel: "@ChibsSleepMeditations", url: "https://www.youtube.com/watch?v=Ar1WRzIsrO4" },
+    peaceful: { title: "Higher Heart Chakra Deep Sleep 432Hz Sound Bath", channel: "@HealingChakraVibrations", url: "https://www.youtube.com/watch?v=TlcTOwFnSrc" }
+  }
+};
+
+// ── ROTATING CONTENT ────────────────────────────────
+const morningAffirmations = [
+  '"What\'s one small thing you\'re glad exists this morning?"',
+  '"What\'s one way you want to feel by tonight?"',
+  '"What does your body need from you today?"',
+  '"Name something you\'re proud of, however small."',
+  '"What would feel like a gift to yourself today?"',
+  '"Who or what are you grateful for right now?"',
+  '"What intention would help you feel more like yourself today?"'
+];
+
+const eveningPrompts = [
+  '"What was your favourite small moment today — even a tiny one?"',
+  '"What can you let go of before you sleep tonight?"',
+  '"Who or what made today worth it?"',
+  '"What did your body do well today, even when things were hard?"',
+  '"What was one moment of kindness — given or received?"',
+  '"If you could bottle one feeling from today, what would it be?"',
+  '"What does tomorrow\'s you need to know?"'
+];
+
+const midMorningVariants = [
+  { title: "The transition bridge", q: "Where are you holding tension right now?" },
+  { title: "A breath before the day", q: "How would you describe your energy right now?" },
+  { title: "Checking in with your body", q: "What does your body need more of right now?" },
+  { title: "A pause before the busyness", q: "On a scale of calm to chaos — where are you?" },
+  { title: "Your mid-morning moment", q: "What's sitting on your chest (literally or figuratively)?" }
+];
+
+// ── MICRO ACTIONS ────────────────────────────────────
+const microActions = {
+  shoulders: "💛 Try this: Roll your shoulders back 3 times slowly. Then drop them away from your ears and hold for 5 breaths. Your body has been protecting you — thank it.",
+  jaw: "💛 Try this: Unclench your jaw, let your tongue drop from the roof of your mouth. Take one long exhale through slightly parted lips. Notice the release.",
+  chest: "💛 Try this: Place one hand on your chest. Breathe in for 4 counts, out for 6. Your heart is working hard — give it a moment of care.",
+  stomach: "💛 Try this: Soften your belly. We hold so much there. Take 3 slow breaths directing warmth toward your stomach. You're safe right now.",
+  ok: "🌿 Lovely. Your system is settling. Take a moment to notice that — it matters more than you know."
+};
+
+// ── NS STATE LABELS ──────────────────────────────────
+const nsLabels = ['', 'Very calm 🌿', 'Calm', 'Neutral', 'Activated', 'Fight/flight 😬'];
+
+// ── INIT ─────────────────────────────────────────────
+function init() {
+  // Set date
+  const now = new Date();
+  document.getElementById('headerDate').textContent = now.toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+
+  // Set week
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - now.getDay() + 1);
+  document.getElementById('weekOf').textContent = monday.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+
+  // Rotate morning affirmation
+  const dayIndex = now.getDay();
+  document.getElementById('morningAffirmation').textContent = morningAffirmations[dayIndex];
+  document.getElementById('eveningPrompt').textContent = eveningPrompts[dayIndex];
+
+  // Rotate mid-morning
+  const variant = midMorningVariants[dayIndex % midMorningVariants.length];
+  document.getElementById('midMorningTitle').textContent = variant.title;
+  document.getElementById('midMorningQ1').textContent = variant.q;
+
+  // Update header greeting
+  const hour = now.getHours();
+  let greeting = 'Good morning';
+  if (hour >= 12 && hour < 17) greeting = 'Good afternoon';
+  else if (hour >= 17) greeting = 'Good evening';
+  document.querySelector('.header-title').innerHTML = `${greeting}, <br>you're doing well 🌿`;
+}
+
+// ── SECTION SWITCHING ────────────────────────────────
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = { today: 0, tracker: 1, planner: 2, summary: 3, setup: 4 };
+  if (map[name] !== undefined) tabs[map[name]].classList.add('active');
+}
+
+function setBottomNav(btn) {
+  document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── OPTION SELECTION ─────────────────────────────────
+function selectOption(btn, group) {
+  const parent = btn.closest('.options-grid');
+  parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  // Store in state for reliable sheet logging
+  state.answers = state.answers || {};
+  state.answers[group] = btn.textContent.trim();
+}
+
+// ── YOUTUBE ──────────────────────────────────────────
+function showYT(ytId, mood) {
+  const lib = ytId.includes('morning') ? ytLibrary.morning :
+              ytId.includes('afternoon') ? ytLibrary.afternoon : ytLibrary.evening;
+  const rec = lib[mood] || Object.values(lib)[0];
+
+  const container = document.getElementById(ytId);
+  const titleKey = ytId + 'Title';
+  const channelKey = ytId + 'Channel';
+  const linkKey = ytId + 'Link';
+  const afterKey = ytId.replace('YT', 'After');
+
+  if (document.getElementById(titleKey)) document.getElementById(titleKey).textContent = rec.title;
+  if (document.getElementById(channelKey)) document.getElementById(channelKey).textContent = rec.channel;
+  if (document.getElementById(linkKey)) document.getElementById(linkKey).href = rec.url;
+
+  container.classList.add('visible');
+  state.practicesAttempted++;
+  state.lastPractice = rec.title + ' — ' + rec.channel;
+
+  // Show after-practice check after a delay
+  setTimeout(() => {
+    const after = document.getElementById(afterKey);
+    if (after) after.classList.add('visible');
+  }, 3000);
+}
+
+function hideYT(ytId) {
+  document.getElementById(ytId).classList.remove('visible');
+}
+
+// ── MICRO ACTIONS ────────────────────────────────────
+function showMicroAction(area) {
+  const block = document.getElementById('microAction');
+  const text = document.getElementById('microActionText');
+  text.textContent = microActions[area];
+  block.style.display = 'block';
+}
+
+// ── NS STATE ─────────────────────────────────────────
+function setNSState(level) {
+  state.nsState = level;
+  const dots = document.querySelectorAll('.ns-dot');
+  dots.forEach((d, i) => {
+    d.classList.remove('active', 'filled');
+    if (i + 1 === level) d.classList.add('active');
+    else if (i + 1 < level) d.classList.add('filled');
+  });
+  document.getElementById('nsStateLabel').textContent = nsLabels[level];
+  // Store timestamp of last NS update for sheet logging
+  state.nsUpdatedAt = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── GOOGLE SHEETS LOGGING ────────────────────────────
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbz3yf9jztKr6HHd2Fx49oW0xAMKn3N0tmKLsXW1pOtYQ_avl6iXaCMsizm1mnnVOYF0/exec';
+
+function logToSheet(type, extraData = {}) {
+  const now = new Date();
+  const a = state.answers || {};
+
+  // Base payload — only fields that apply to every check-in
+  const payload = {
+    date: now.toLocaleDateString('en-GB'),
+    time: now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+    checkIn: type,
+    sleep: '',
+    nsState: '',
+    riseEnergy: '',
+    sleepDebt: '',
+    practice: '',
+    practiceFelt: '',
+    notes: '',
+    energy: '',
+    nourishment: ''
+  };
+
+  // Per check-in: only populate relevant fields
+  if (type === 'morning') {
+    payload.sleep      = a['sleep'] || '';
+    payload.nsState    = a['nsmorning'] || (state.nsState > 0 ? nsLabels[state.nsState] : 'Not recorded');
+    payload.riseEnergy = document.getElementById('riseEnergy') ? document.getElementById('riseEnergy').value : '';
+    payload.sleepDebt  = document.getElementById('riseSleepDebt') ? document.getElementById('riseSleepDebt').value : '';
+    payload.practice   = state.lastPractice || '';
+    payload.practiceFelt = a['morningAfter'] || '';
+    payload.notes      = document.getElementById('morningReflection') ? document.getElementById('morningReflection').value : '';
+  } else if (type === 'midmorning') {
+    payload.notes      = document.getElementById('midMorningNote') ? document.getElementById('midMorningNote').value : '';
+  } else if (type === 'midday') {
+    payload.energy     = a['midEnergy'] || '';
+    payload.nourishment = a['nourish'] || '';
+  } else if (type === 'afternoon') {
+    payload.nsState    = a['afternoonNeed'] || '';
+    payload.energy     = a['dayRate'] || '';
+    payload.practice   = state.lastPractice || '';
+    payload.practiceFelt = a['afternoonAfter'] || '';
+  } else if (type === 'evening') {
+    payload.nsState    = a['eveningBody'] || (state.nsState > 0 ? nsLabels[state.nsState] : 'Not recorded');
+    payload.practice   = state.lastPractice || '';
+    payload.practiceFelt = a['eveningAfter'] || '';
+    payload.notes      = document.getElementById('eveningReflection') ? document.getElementById('eveningReflection').value : '';
+  }
+
+  Object.assign(payload, extraData);
+
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {
+    // Silent fail — don't interrupt the user experience
+  });
+}
+
+// ── SAVE CHECK-INS ───────────────────────────────────
+const trackerEmojis = { morning: '🌅', midmorning: '🌤', midday: '☀️', afternoon: '🌇', evening: '🌙' };
+const trackerNS = { morning: 1, midmorning: 2, midday: 3, afternoon: 4, evening: 5 };
+const trackerStates = { morning: 't1', midmorning: 't2', midday: 't3', afternoon: 't4', evening: 't5' };
+
+let checkinsCompleted = 0;
+
+function saveCheckin(type) {
+  state.checkins[type].done = true;
+  checkinsCompleted++;
+
+  // Update tracker
+  const prefix = trackerStates[type];
+  document.getElementById(prefix + 'emoji').textContent = trackerEmojis[type];
+  document.getElementById(prefix + 'state').textContent = 'Done ✓';
+
+  // Update counts
+  document.getElementById('trackCheckins').textContent = checkinsCompleted + ' of 5';
+  document.getElementById('eodCheckins').textContent = checkinsCompleted + ' of 5';
+  document.getElementById('trackPractices').textContent = state.practicesAttempted;
+  document.getElementById('eodPractices').textContent = state.practicesAttempted;
+
+  // Rise score
+  if (type === 'morning') {
+    const energy = document.getElementById('riseEnergy').value;
+    const debt = document.getElementById('riseSleepDebt').value;
+    const scoreDisplay = [energy && `Energy: ${energy}`, debt && `Debt: ${debt}`].filter(Boolean).join(' · ');
+    if (scoreDisplay) {
+      state.riseScore = scoreDisplay;
+      document.getElementById('eodSleep').textContent = scoreDisplay;
+    }
+  }
+
+  // Log to Google Sheets
+  logToSheet(type);
+
+  // Clear answers for this checkin so they don't bleed into the next
+  state.answers = {};
+  state.lastPractice = '';
+
+  // Update insight
+  updateInsight();
+
+  // Mark card as done
+  const cards = document.querySelectorAll('.checkin-card');
+  const cardMap = { morning: 0, midmorning: 1, midday: 2, afternoon: 3, evening: 4 };
+  const card = cards[cardMap[type]];
+  if (card) {
+    const status = card.querySelector('.card-status');
+    if (status) { status.textContent = 'Done ✓'; status.className = 'card-status done'; }
+  }
+
+  // Visual feedback
+  const btn = event.target;
+  btn.textContent = 'Saved 💚';
+  btn.style.background = 'var(--green-light)';
+  setTimeout(() => {
+    btn.textContent = type === 'evening' ? 'Close the day gently 🌙' : 'Save check-in 🌿';
+    btn.style.background = '';
+  }, 2000);
+}
+
+function updateInsight() {
+  const insights = [
+    "You showed up for yourself today. That's the whole job.",
+    "One check-in is enough. You did it.",
+    "Your nervous system noticed you came back for it.",
+    "Every pause you took today was an act of self-compassion.",
+    "You're building something real here — one gentle moment at a time."
+  ];
+  const insight = insights[checkinsCompleted - 1] || insights[0];
+  document.getElementById('dailyInsight').textContent = insight;
+  document.getElementById('eodInsight').textContent = insight;
+}
+
+function showNourishNudge() {
+  document.getElementById('nourishNudge').style.display = 'block';
+}
+
+function hideNourishNudge() {
+  document.getElementById('nourishNudge').style.display = 'none';
+}
+
+// ── PLANNER ──────────────────────────────────────────
+function savePlanner() {
+  const items = [
+    { icon: '💞', label: 'Relationship', id: 'plan-relationship' },
+    { icon: '👨‍👩‍👧', label: 'Family', id: 'plan-family' },
+    { icon: '👯', label: 'Social', id: 'plan-social' },
+    { icon: '🌸', label: 'Me Time', id: 'plan-me' }
+  ];
+
+  const container = document.getElementById('savedIntentions');
+  container.innerHTML = '<div style="font-size:13px; color:var(--text-light); margin-bottom:12px;">This week\'s intentions 🌸</div>';
+
+  items.forEach(item => {
+    const val = document.getElementById(item.id).value;
+    if (val) {
+      container.innerHTML += `<div class="intention-pill"><span>${item.icon}</span><span>${item.label}: ${val}</span></div>`;
+    }
+  });
+
+  container.classList.add('visible');
+
+  const btn = event.target;
+  btn.textContent = 'Intentions saved 🌸';
+  setTimeout(() => { btn.textContent = 'Save this week\'s intentions 🌸'; }, 2000);
+}
+
+// ── START ─────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
